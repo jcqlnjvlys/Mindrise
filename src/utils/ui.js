@@ -41,26 +41,32 @@ function injectCompactDialogStyles() {
       margin-top: 5px !important;
     }
 
-    /* Compact Add Task dialog only */
+    /* Compact routine task dialogs */
     .mindrise-dialog-compact-task form {
       gap: 5px !important;
     }
 
     .mindrise-dialog-compact-task > p {
-      margin-bottom: 10px !important;
+      margin-bottom: 8px !important;
+    }
+
+    /* Keep a comfortable gap between Task name and its input */
+    .mindrise-dialog-compact-task label + input {
+      margin-top: 5px !important;
     }
 
     .mindrise-dialog-compact-task input {
-      margin: 0 !important;
+      margin-bottom: 0 !important;
     }
 
     .mindrise-dialog-compact-task .profile-dialog-message {
       min-height: 0 !important;
-      margin: 2px 0 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     .mindrise-dialog-compact-task .profile-dialog-actions {
-      margin-top: 7px !important;
+      margin-top: 5px !important;
     }
 
     /* Compact Logout and Delete Account dialogs only */
@@ -115,7 +121,11 @@ export function showDialog({
 
   let compactClass = ''
 
-  if (normalizedTitle === 'add routine task') {
+  if (
+    normalizedTitle === 'add routine task' ||
+    normalizedTitle === 'edit routine task' ||
+    normalizedTitle === 'delete routine task?'
+  ) {
     compactClass = 'mindrise-dialog-compact-task'
   } else if (
     normalizedTitle === 'log out?' ||
