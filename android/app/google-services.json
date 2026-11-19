@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "494148792368",
+    "project_id": "mindrise-fa09d",
+    "storage_bucket": "mindrise-fa09d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494148792368:android:d1a1dd9063584f0107bdf5",
+        "android_client_info": {
+          "package_name": "com.mindrise.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "494148792368-ioepk1po4i5mhg8bbbii5usumbmpiif5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mindrise.app",
+            "certificate_hash": "70ace5ed0aa00bec3fa812cc7c3dd7b326234ef0"
+          }
+        },
+        {
+          "client_id": "494148792368-83rg7icvds41afklj33inhgbdbl0paeg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCt7ocdenViA7GEdsc_H-ytq3n-NzRxWts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "494148792368-83rg7icvds41afklj33inhgbdbl0paeg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

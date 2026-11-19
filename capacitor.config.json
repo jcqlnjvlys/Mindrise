@@ -1,0 +1,14 @@
+
+{
+  "appId": "com.mindrise.app",
+  "appName": "Mindrise",
+  "webDir": "dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "providers": [
+        "google.com",
+        "facebook.com"
+      ]
+    }
+  }
+}

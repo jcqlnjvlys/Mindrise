@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mindrise</string>
+    <string name="title_activity_main">Mindrise</string>
+    <string name="package_name">com.mindrise.app</string>
+    <string name="custom_url_scheme">com.mindrise.app</string>
+
+    <!-- Facebook Authentication -->
+    <string name="facebook_app_id">1806601677083312</string>
+    <string name="fb_login_protocol_scheme">fb1806601677083312</string>
+    <string name="facebook_client_token">b9a2e971f8af5af934be19fd4758845a</string>
+</resources>
