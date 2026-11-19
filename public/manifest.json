@@ -1,0 +1,20 @@
+
+{
+  "id": "/",
+  "name": "Mindrise",
+  "short_name": "Mindrise",
+  "description": "Alarm and Sleep Habits Management System",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#123e70",
+  "theme_color": "#123e70",
+  "icons": [
+    {
+      "src": "/mindrise-bird.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
