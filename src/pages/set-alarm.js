@@ -47,23 +47,58 @@ function installAlarmLayoutFix() {
   style.id = id
 
   style.textContent = `
-    html, body {
+    html,
+    body {
+      width: 100%;
       max-width: 100%;
       overflow-x: clip !important;
     }
 
-    #app {
+    html:has(.set-alarm-page),
+    body:has(.set-alarm-page) {
+      height: auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+    }
+
+    body:has(.set-alarm-page) {
+      margin: 0 !important;
+    }
+
+    body:has(.set-alarm-page) #app {
+      width: 100%;
       max-width: 100%;
-      overflow-x: clip !important;
+      min-width: 0;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
     }
 
     .set-alarm-page {
       width: 100% !important;
       max-width: 650px !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      margin: 0 auto !important;
+      padding-top: 28px !important;
+      padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
       box-sizing: border-box !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
       overflow-x: clip !important;
+      overflow-y: visible !important;
+    }
+
+    .set-alarm-page #alarm-form {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    .set-alarm-page .form-header {
+      flex-shrink: 0;
     }
 
     .set-alarm-page *,
@@ -139,6 +174,11 @@ function installAlarmLayoutFix() {
     }
 
     @media (max-width: 600px) {
+      .set-alarm-page {
+        padding-left: 25px !important;
+        padding-right: 25px !important;
+      }
+
       .alarm-time-dialog {
         width: 100% !important;
         max-width: 440px !important;

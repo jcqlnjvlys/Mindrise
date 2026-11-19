@@ -1,5 +1,4 @@
-﻿
-import './style.css'
+﻿import './style.css'
 import { auth } from './firebase.js'
 import { startCloudSync, queueCloudSave, stopCloudSync } from './utils/cloud-sync.js'
 import { Capacitor, registerPlugin } from '@capacitor/core'
@@ -60,6 +59,8 @@ let fullScreenIntentPrompted = false
 let checkingNativePending = false
 
 let nativeSyncVersion = 0
+let startupReady = false
+let authInitializationVersion = 0
 
 const firedOccurrences = new Set()
 
@@ -84,6 +85,8 @@ function renderSplash() {
     setTimeout(initializeAuth, 450)
   }, 800)
 }
+
+/* Native alarm synchronization */
 
 async function syncNativeAlarms({ askPermission = false } = {}) {
   if (!isNativeAndroid()) return
@@ -198,6 +201,8 @@ async function cancelNativeAlarms() {
   }
 }
 
+/* Native alarm session persistence */
+
 function getAlarmSession() {
   if (!activeAlarm) return null
 
@@ -238,6 +243,7 @@ async function restoreNativeAlarmSession() {
 
     activeAlarm = session.alarm
     alarmStage = session.stage || 'ringing'
+
     challengeIndex = Math.max(
       0,
       Math.min(2, Number(session.challengeIndex) || 0)
@@ -254,12 +260,18 @@ async function restoreNativeAlarmSession() {
 
     if (alarmStage === 'confirmation') {
       void MindriseAlarm.stopRinging()
+
       showWakeConfirmation(confirmationDeadline)
+
       return true
     }
 
     if (alarmStage === 'challenges') {
       challengeSequence = createChallengeSequence()
+
+      if (challengeIndex >= 3) {
+        challengeIndex = 2
+      }
 
       void MindriseAlarm.startRinging({
         alarm: activeAlarm
@@ -268,10 +280,13 @@ async function restoreNativeAlarmSession() {
       })
 
       showCurrentChallenge()
+
       return true
     }
 
     alarmStage = 'ringing'
+    challengeSequence = []
+    challengeIndex = 0
 
     renderAlarmRinging(
       activeAlarm,
@@ -286,6 +301,7 @@ async function restoreNativeAlarmSession() {
     })
 
     saveAlarmSession()
+
     return true
 
   } catch (error) {
@@ -295,7 +311,14 @@ async function restoreNativeAlarmSession() {
 }
 
 async function checkPendingNativeAlarm() {
-  if (!isNativeAndroid() || activeAlarm || checkingNativePending) return
+  if (
+    !isNativeAndroid() ||
+    !startupReady ||
+    activeAlarm ||
+    checkingNativePending
+  ) {
+    return
+  }
 
   checkingNativePending = true
 
@@ -311,6 +334,8 @@ async function checkPendingNativeAlarm() {
     checkingNativePending = false
   }
 }
+
+/* Data persistence */
 
 function persist() {
   saveData(data)
@@ -359,15 +384,6 @@ function returnToAlarms() {
   renderPage()
 }
 
-/*
- * Android system Back button / gesture handling.
- *
- * 1. Dismiss an open dialog first.
- * 2. Protect an active alarm and its wake-up flow.
- * 3. Navigate backward through Mindrise's page history.
- * 4. Return to Alarms if the page history is unexpectedly empty.
- * 5. Exit Android normally when Alarms is already the root page.
- */
 function handleAndroidBackButton() {
   if (!isNativeAndroid()) return
 
@@ -378,7 +394,6 @@ function handleAndroidBackButton() {
     return
   }
 
-  // Never interrupt an active ringing, challenge, or confirmation flow.
   if (activeAlarm) {
     return
   }
@@ -396,7 +411,6 @@ function handleAndroidBackButton() {
     return
   }
 
-  // Alarms is the root page. Let Android exit the app.
   void App.exitApp()
 }
 
@@ -411,6 +425,8 @@ function openAbout() {
 function openSettings() {
   navigate('settings')
 }
+
+/* Account management */
 
 async function deleteAccountWithPassword() {
   const user = auth.currentUser
@@ -489,6 +505,8 @@ async function deleteAccountWithPassword() {
   })
 }
 
+/* Page rendering */
+
 function renderPage() {
   if (currentPage === 'alarms') {
     renderAlarms(
@@ -535,7 +553,9 @@ function renderPage() {
       openProfile,
       saveSleepTime,
       changeSleepGoal,
-      changeMood
+      changeMood,
+      deleteSleepRecord,
+      clearSleepRecords
     )
 
   } else if (currentPage === 'sleep') {
@@ -858,6 +878,37 @@ function changeMood(mood, moodInsights = null) {
   persist()
 }
 
+/* DELETE ONE SLEEP RECORD */
+
+function deleteSleepRecord(record) {
+  if (!record) return
+
+  const sleepRecords = Array.isArray(data.sleepRecords)
+    ? data.sleepRecords
+    : []
+
+  data.sleepRecords = sleepRecords.filter(item => {
+    if (record.id && item.id) {
+      return item.id !== record.id
+    }
+
+    return item.sleepTime !== record.sleepTime ||
+      item.wakeTime !== record.wakeTime
+  })
+
+  persist()
+  renderPage()
+}
+
+/* CLEAR ALL SAVED SLEEP RECORDS */
+
+function clearSleepRecords() {
+  data.sleepRecords = []
+
+  persist()
+  renderPage()
+}
+
 /* Sleep sounds */
 
 function changeSoundSettings(soundId, loop) {
@@ -870,7 +921,7 @@ function changeSoundSettings(soundId, loop) {
 /* Alarm ringing and wake-up flow */
 
 function startRinging(alarm, nativePlayback = false) {
-  if (activeAlarm) return
+  if (activeAlarm || !alarm?.id) return
 
   activeAlarm = alarm
   alarmStage = 'ringing'
@@ -881,20 +932,13 @@ function startRinging(alarm, nativePlayback = false) {
   saveAlarmSession()
 
   if (!alarm.repeat || alarm.repeat.length === 0) {
-    data.alarms = data.alarms.map(a =>
+    data.alarms = (data.alarms || []).map(a =>
       a.id === alarm.id ? { ...a, enabled: false } : a
     )
 
     persist()
   }
 
-  /*
-   * Android always uses the native foreground alarm service.
-   * The browser Audio element is reserved for web playback.
-   *
-   * When nativePlayback is true, AlarmReceiver has already started
-   * the native service, so we do not start it a second time here.
-   */
   const useNativePlayback = isNativeAndroid()
 
   renderAlarmRinging(
@@ -946,9 +990,6 @@ function handleCorrectChallenge() {
     return
   }
 
-  /*
-   * The alarm is stopped only after the third correct answer.
-   */
   stopAlarmAudio()
 
   showWakeConfirmation()
@@ -1105,6 +1146,7 @@ function getDueOccurrence(alarm, now) {
 
 function checkAlarms() {
   if (
+    !startupReady ||
     activeAlarm ||
     (
       isNativeAndroid() &&
@@ -1152,12 +1194,19 @@ function showSignup() {
 }
 
 function initializeAuth() {
+  const initializationVersion = ++authInitializationVersion
+
+  const isLatestInitialization = () =>
+    initializationVersion === authInitializationVersion
+
   const params = new URLSearchParams(window.location.search)
 
   const mode = params.get('mode')
   const oobCode = params.get('oobCode')
 
   if (mode === 'resetPassword' && oobCode) {
+    startupReady = true
+
     renderPasswordReset(oobCode, () => {
       window.history.replaceState(
         {},
@@ -1172,6 +1221,10 @@ function initializeAuth() {
   }
 
   onAuthStateChanged(auth, async user => {
+    if (!isLatestInitialization()) return
+
+    startupReady = false
+
     if (user) {
       try {
         await user.reload()
@@ -1181,6 +1234,8 @@ function initializeAuth() {
           error
         )
       }
+
+      if (!isLatestInitialization()) return
     }
 
     applyAppearance()
@@ -1190,15 +1245,32 @@ function initializeAuth() {
 
       data = loadData()
 
+      currentPage = 'alarms'
+      editingAlarmId = null
+      pageHistory.length = 0
+
+      let restoredSession = false
+
+      if (isNativeAndroid()) {
+        restoredSession = await restoreNativeAlarmSession()
+
+        if (!isLatestInitialization()) return
+      }
+
+      if (!restoredSession && isNativeAndroid()) {
+        await checkPendingNativeAlarm()
+
+        if (!isLatestInitialization()) return
+      }
+
+      startupReady = true
+
       try {
         await startCloudSync(user.uid, {
           getLocalData: () => data,
           setLocalData: cloudData => {
-            /*
-             * Keep the alarm currently being edited in local memory.
-             * A delayed cloud snapshot must not remove it and trigger
-             * the Set Alarm page's missing-alarm redirect.
-             */
+            if (!isLatestInitialization()) return
+
             if (currentPage === 'set-alarm' && editingAlarmId) {
               const localEditingAlarm = (data.alarms || []).find(
                 alarm => alarm.id === editingAlarmId
@@ -1241,18 +1313,17 @@ function initializeAuth() {
         )
       }
 
-      currentPage = 'alarms'
-      editingAlarmId = null
-      pageHistory.length = 0
+      if (!isLatestInitialization()) return
 
       await syncNativeAlarms({
         askPermission: true
       })
 
-      const restoredSession = await restoreNativeAlarmSession()
+      if (!isLatestInitialization()) return
 
-      if (!restoredSession) {
+      if (!restoredSession && !activeAlarm) {
         renderPage()
+
         await checkPendingNativeAlarm()
       }
 
@@ -1264,6 +1335,7 @@ function initializeAuth() {
       currentPage = 'alarms'
       editingAlarmId = null
       pageHistory.length = 0
+
       activeAlarm = null
       alarmStage = null
       challengeSequence = []
@@ -1271,6 +1343,10 @@ function initializeAuth() {
       confirmationDeadline = null
 
       await cancelNativeAlarms()
+
+      if (!isLatestInitialization()) return
+
+      startupReady = true
 
       startApp()
     }
@@ -1292,7 +1368,7 @@ setInterval(() => {
 }, 1000)
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
+  if (!document.hidden && startupReady) {
     void syncNativeAlarms({
       askPermission: true
     })
@@ -1302,6 +1378,8 @@ document.addEventListener('visibilitychange', () => {
 })
 
 window.addEventListener('focus', () => {
+  if (!startupReady) return
+
   void syncNativeAlarms({
     askPermission: true
   })

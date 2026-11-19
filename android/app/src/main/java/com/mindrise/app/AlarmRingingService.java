@@ -1,3 +1,4 @@
+
 package com.mindrise.app;
 
 import android.app.Notification;
@@ -84,7 +85,8 @@ public class AlarmRingingService extends Service {
     }
 
     private String currentAlarmAlarmName() {
-        return currentAlarmName == null || currentAlarmName.trim().isEmpty()
+        return currentAlarmName == null
+                || currentAlarmName.trim().isEmpty()
                 ? "Mindrise alarm"
                 : currentAlarmName;
     }
@@ -108,9 +110,6 @@ public class AlarmRingingService extends Service {
             );
 
             screenWakeLock.setReferenceCounted(false);
-
-            // Temporary wake-up only. The alarm activity itself
-            // maintains the screen while the alarm UI is visible.
             screenWakeLock.acquire(15000L);
 
         } catch (Exception error) {
@@ -137,17 +136,20 @@ public class AlarmRingingService extends Service {
 
         Intent openApp = new Intent(this, MainActivity.class);
 
-        openApp.setAction(ACTION_OPEN_ALARM());
+        openApp.setAction(
+                "com.mindrise.app.OPEN_RINGING_ALARM"
+        );
+
         openApp.putExtra("alarmId", alarmId);
         openApp.putExtra("alarmName", alarmName);
 
         openApp.addFlags(
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        | Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
         );
 
-        PendingIntent contentIntent = PendingIntent.getActivity(
+        PendingIntent fullScreenIntent = PendingIntent.getActivity(
                 this,
                 6302,
                 openApp,
@@ -169,8 +171,8 @@ public class AlarmRingingService extends Service {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setAutoCancel(false)
-                .setContentIntent(contentIntent)
-                .setFullScreenIntent(contentIntent, true)
+                .setContentIntent(fullScreenIntent)
+                .setFullScreenIntent(fullScreenIntent, true)
                 .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -182,10 +184,6 @@ public class AlarmRingingService extends Service {
         } else {
             startForeground(NOTIFICATION_ID, notification);
         }
-    }
-
-    private String ACTION_OPEN_ALARM() {
-        return "com.mindrise.app.OPEN_RINGING_ALARM";
     }
 
     private void startPlayback(String fileName) {
@@ -313,8 +311,6 @@ public class AlarmRingingService extends Service {
             channel.setLockscreenVisibility(
                     Notification.VISIBILITY_PUBLIC
             );
-
-            channel.setBypassDnd(false);
 
             NotificationManager manager =
                     getSystemService(NotificationManager.class);
