@@ -26,6 +26,42 @@ const logo = `<img class="hummingbird" src="/mindrise-bird.png" alt="Mindrise bi
 // PASSWORD VISIBILITY
 // --------------------------------------------------
 
+const eyeIcon = `
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+`
+
+const eyeOffIcon = `
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M3 3l18 18"/>
+    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+    <path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a13.6 13.6 0 0 1-3.1 4.1"/>
+    <path d="M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.3"/>
+  </svg>
+`
+
 function passwordField(id, placeholder, autocomplete) {
   return `
     <div class="password-field">
@@ -44,7 +80,7 @@ function passwordField(id, placeholder, autocomplete) {
         aria-label="Show password"
         aria-pressed="false"
       >
-        Show
+        ${eyeIcon}
       </button>
     </div>
   `
@@ -62,11 +98,13 @@ function attachPasswordToggles() {
       const showing = input.type === 'text'
 
       input.type = showing ? 'password' : 'text'
-      button.textContent = showing ? 'Show' : 'Hide'
+      button.innerHTML = showing ? eyeIcon : eyeOffIcon
+
       button.setAttribute(
         'aria-label',
         showing ? 'Show password' : 'Hide password'
       )
+
       button.setAttribute('aria-pressed', String(!showing))
     })
   })

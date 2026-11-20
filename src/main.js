@@ -1,4 +1,5 @@
-﻿import './style.css'
+﻿
+import './style.css'
 import { auth } from './firebase.js'
 import { startCloudSync, queueCloudSave, stopCloudSync } from './utils/cloud-sync.js'
 import { Capacitor, registerPlugin } from '@capacitor/core'
@@ -439,8 +440,63 @@ async function deleteAccountWithPassword() {
     provider => provider.providerId === 'password'
   )
 
+  const eyeIcon = `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  `
+
+  const eyeOffIcon = `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 3l18 18"/>
+      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+      <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.7 14.7 0 0 1-3.3 4.2"/>
+      <path d="M6.2 6.2C3.6 8 2 12 2 12s3.6 7 10 7a10.6 10.6 0 0 0 4.2-.9"/>
+    </svg>
+  `
+
   const content = emailPassword
-    ? '<label for="delete-account-password">Current password</label><div class="password-field"><input id="delete-account-password" type="password" autocomplete="current-password" required><button type="button" class="password-toggle" data-password-toggle="delete-account-password">Show</button></div>'
+    ? `
+      <label for="delete-account-password">Current password</label>
+      <div class="password-field">
+        <input
+          id="delete-account-password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+        <button
+          type="button"
+          class="password-toggle"
+          id="delete-account-password-toggle"
+          aria-label="Show password"
+          aria-pressed="false"
+        >${eyeIcon}</button>
+      </div>
+    `
     : '<p class="settings-note">You will be asked to verify your identity with your sign-in provider before deletion.</p>'
 
   showDialog({
@@ -503,6 +559,28 @@ async function deleteAccountWithPassword() {
       }
     }
   })
+
+  const passwordInput = document.querySelector('#delete-account-password')
+  const passwordToggle = document.querySelector('#delete-account-password-toggle')
+
+  if (passwordInput && passwordToggle) {
+    passwordToggle.innerHTML = eyeIcon
+
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password'
+
+      passwordInput.type = isPassword ? 'text' : 'password'
+      passwordToggle.innerHTML = isPassword ? eyeOffIcon : eyeIcon
+      passwordToggle.setAttribute(
+        'aria-label',
+        isPassword ? 'Hide password' : 'Show password'
+      )
+      passwordToggle.setAttribute(
+        'aria-pressed',
+        String(isPassword)
+      )
+    })
+  }
 }
 
 /* Page rendering */
@@ -685,6 +763,7 @@ function addRoutine() {
       >
     `,
     confirmText: 'Add Task',
+    hideCloseButton: true,
     onConfirm: form => {
       const clean = form.querySelector('#routine-task-name')?.value.trim()
 
@@ -740,6 +819,7 @@ function editRoutine(id) {
       >
     `,
     confirmText: 'Save Changes',
+    hideCloseButton: true,
     onConfirm: form => {
       const clean = form.querySelector('#routine-task-name')?.value.trim()
 

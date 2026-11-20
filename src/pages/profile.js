@@ -22,6 +22,52 @@ import {
   escapeHTML
 } from '../utils/profile.js'
 
+// --------------------------------------------------
+// PASSWORD VISIBILITY ICONS
+// --------------------------------------------------
+
+const eyeIcon = `
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+`
+
+const eyeOffIcon = `
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M3 3l18 18"/>
+    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+    <path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a13.6 13.6 0 0 1-3.1 4.1"/>
+    <path d="M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.3"/>
+  </svg>
+`
+
+// --------------------------------------------------
+// CAMERA ICON
+// --------------------------------------------------
+
 function cameraIconMarkup() {
   return `
     <svg
@@ -1137,6 +1183,10 @@ function editName(user, callbacks) {
   })
 }
 
+// --------------------------------------------------
+// PASSWORD FIELD WITH EYE ICON
+// --------------------------------------------------
+
 function passwordField(id, label, autocomplete) {
   return `
     <label for="${id}">${label}</label>
@@ -1154,12 +1204,17 @@ function passwordField(id, label, autocomplete) {
         class="password-toggle"
         data-password-toggle="${id}"
         aria-label="Show ${label.toLowerCase()}"
+        aria-pressed="false"
       >
-        Show
+        ${eyeIcon}
       </button>
     </div>
   `
 }
+
+// --------------------------------------------------
+// CHANGE PASSWORD
+// --------------------------------------------------
 
 function changePassword(user) {
   if (!user.email) {
@@ -1263,22 +1318,31 @@ function changePassword(user) {
     event => event.stopPropagation()
   )
 
+  // Password visibility toggles
   backdrop.querySelectorAll('[data-password-toggle]').forEach(button => {
     button.addEventListener('click', () => {
       const input = backdrop.querySelector(
         `#${button.dataset.passwordToggle}`
       )
 
+      if (!input) return
+
       const showing = input.type === 'text'
 
       input.type = showing ? 'password' : 'text'
 
-      button.textContent = showing ? 'Show' : 'Hide'
+      button.innerHTML = showing ? eyeIcon : eyeOffIcon
 
       button.setAttribute(
         'aria-label',
-        `${showing ? 'Show' : 'Hide'} password`
+        `${showing ? 'Show' : 'Hide'} ${button.dataset.passwordToggle === 'current-password'
+          ? 'current password'
+          : button.dataset.passwordToggle === 'new-password'
+            ? 'new password'
+            : 'confirm new password'}`
       )
+
+      button.setAttribute('aria-pressed', String(!showing))
     })
   })
 
@@ -1377,6 +1441,10 @@ function changePassword(user) {
   backdrop.querySelector('#current-password').focus()
 }
 
+// --------------------------------------------------
+// SWITCH ACCOUNT
+// --------------------------------------------------
+
 function showAccountSwitcher(user, callbacks) {
   const accounts = getKnownAccounts()
 
@@ -1465,7 +1533,7 @@ function showAccountSwitcher(user, callbacks) {
               aria-label="Show password"
               aria-pressed="false"
             >
-              Show
+              ${eyeIcon}
             </button>
           </div>
 
@@ -1527,13 +1595,14 @@ function showAccountSwitcher(user, callbacks) {
   document.querySelector('#switch-cancel')
     .addEventListener('click', returnToProfile)
 
+  // Eye icon password toggle
   document.querySelector('#switch-password-toggle')
     .addEventListener('click', buttonEvent => {
       const button = buttonEvent.currentTarget
       const showing = passwordInput.type === 'text'
 
       passwordInput.type = showing ? 'password' : 'text'
-      button.textContent = showing ? 'Show' : 'Hide'
+      button.innerHTML = showing ? eyeIcon : eyeOffIcon
 
       button.setAttribute(
         'aria-label',
@@ -1658,6 +1727,10 @@ function showAccountSwitcher(user, callbacks) {
       }
     })
 }
+
+// --------------------------------------------------
+// PROFILE
+// --------------------------------------------------
 
 export function renderProfile(user, callbacks = {}) {
   if (!user) return
