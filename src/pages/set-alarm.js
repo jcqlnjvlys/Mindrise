@@ -5,7 +5,7 @@ const sounds = [
   { file: 'alarm-synth-verb-hit.wav', name: 'Synth Alarm' },
   { file: 'atari-alarm-climber.wav', name: 'Atari Climber' },
   { file: 'broken-cord-alarm.wav', name: 'Broken Cord Alarm' },
-  { file: 'burglar_alarm.wav', name: 'Burglar Alarm' },
+  { file: 'burgur_alarm.wav', name: 'Burgur Alarm' },
   { file: 'Car_Alarm_Big.wav', name: 'Car Alarm - Loud' },
   { file: 'Car_Alarm_Chirp.wav', name: 'Car Alarm - Chirp' },
   { file: 'Car_Alarm_Oscillating.wav', name: 'Car Alarm - Oscillating' },
@@ -469,13 +469,6 @@ export function renderSetAlarm(existingAlarm, onSave, onCancel) {
         aria-modal="true"
         aria-labelledby="alarm-time-title"
       >
-        <button
-          type="button"
-          class="modal-close"
-          data-time-close
-          aria-label="Close"
-        >×</button>
-
         <span class="page-eyebrow">ALARM SCHEDULE</span>
         <h2 id="alarm-time-title">Choose alarm time</h2>
         <p>Set the time your alarm should ring.</p>
