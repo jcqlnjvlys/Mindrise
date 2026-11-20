@@ -763,4 +763,13 @@ body{
     padding-right:12px;
   }
 }
+/* Fix spacing between challenge answer fields and buttons */
+.challenge-content .quote-card,
+.challenge-content .math-card{
+  margin:12px 0;
+}
 
+.challenge-content .challenge-message{
+  min-height:0;
+  margin:4px 0 8px;
+}
